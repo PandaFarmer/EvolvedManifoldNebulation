@@ -1,0 +1,34 @@
+8/14/2025
+redo of EMN as ratatui cli instead of in bevy
+
+"demo" has tab scrolling and up/down scrolling
+todo have tab scrolling and cartesian scrolling
+ what is a ratatui "buffer"?
+
+See under tabs for struct+impl for defining data/row entries
+
+vhs is used for enabling widgets/graph animations
+
+Goal: have randomized generated/simulated time series data
+
+8/15/2025
+cargo add palette
+cargo add rand_chacha
+cargo add rand
+cargo add itertools
+cargo add unicode_width
+cargo add strum
+
+moved packages not found from dev-dependencies to dependencies
+
+8/16/2025
+features/changes needed:
+refactor inventory into items, inventory_storage, inventory_consignment, inventory_market
+add an item_details with fields:
+    name
+    weight_per_unit
+    volume_per_unit
+    mass_per_unit
+    credits_per_unit
+
+add a timestamp field on item indicating historical market rates
