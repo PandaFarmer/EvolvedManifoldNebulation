@@ -31,6 +31,7 @@ ratatui = { version = "0.29.0", features = ["widget-calendar"] }
 strum = { version = "0.27", features = ["derive"] }
 time = { version = "0.3.41", features = ["local-offset"] }
 indoc = "2"
+chrono = "0.4"
 
 color-eyre = "0.6.3"
 palette = "0.7.3"

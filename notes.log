@@ -26,9 +26,9 @@ features/changes needed:
 refactor inventory into items, inventory_storage, inventory_consignment, inventory_market
 add an item_details with fields:
     name
-    weight_per_unit
     volume_per_unit
     mass_per_unit
     credits_per_unit
 
 add a timestamp field on item indicating historical market rates
+deleted render_inventory and 

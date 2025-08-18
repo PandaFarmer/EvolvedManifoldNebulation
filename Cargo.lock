@@ -734,6 +734,7 @@ dependencies = [
  "anyhow",
  "argh",
  "better-panic",
+ "chrono",
  "color-eyre",
  "criterion",
  "crossterm",

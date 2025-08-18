@@ -10,12 +10,15 @@
 //     },
 // };
 
+use chrono::{DateTime, NaiveDateTime, Utc};
+
 use ratatui::widgets::Row;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Item {
     pub quantity: &'static str,
     pub name: &'static str,
+    // pub timestamp: &'static str,
 }
 
 impl Item {

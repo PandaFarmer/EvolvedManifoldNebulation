@@ -120,10 +120,11 @@ impl Widget for InventoryTab {
             horizontal: 2,
             vertical: 1,
         });
-        let [inventory, items] =
-            Layout::horizontal([Constraint::Length(44), Constraint::Min(0)]).areas(area);
+        // let [inventory, items] =
+        let [items] =
+            Layout::horizontal([Constraint::Min(30)]).areas(area);
 
-        render_inventory(inventory, buf);
+        // render_inventory(inventory, buf);
         render_items(self.row_index, items, buf);
     }
 }
