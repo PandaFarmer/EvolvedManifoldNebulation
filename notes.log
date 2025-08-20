@@ -31,4 +31,14 @@ add an item_details with fields:
     credits_per_unit
 
 add a timestamp field on item indicating historical market rates
-deleted render_inventory and 
+
+8/18/2025
+deleted render_inventory and inventory in rect array
+note that render_items uses ITEMS.iter().copied() instead of func args to access row info
+
+8/19/2025
+need functionality of placing items in consignment/cache.. 4 separate tabs, 2 for store 2 for cache per self/market
+4 tabs that use item_detail and item, 1 script that defines market values?
+also button to inspect item type on market and bring up graph
+shift in market prices based off some metrics idk liquidity, sector demand, etc.. refactor market value script?
+feature to flip display mode between total and each per item

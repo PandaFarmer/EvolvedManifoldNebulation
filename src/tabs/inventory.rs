@@ -10,9 +10,11 @@ use ratatui::{
     },
 };
 
-use crate::models::item::Item;
+use crate::models::{item::Item, item_detail::ItemDetail, item_aggregate::ItemAggregate};
 
 use crate::{RgbSwatch, THEME};
+
+use std::collections::HashMap;
 
 // https://www.realsimple.com/food-inventorys/browse-all-inventorys/ratatouille
 const INVENTORY: &[(&str, &str)] = &[
@@ -30,50 +32,59 @@ const INVENTORY: &[(&str, &str)] = &[
     ),
 ];
 
+const ITEM_DETAILS: &[ItemDetail] = &[
+    ItemDetail {
+        name: "galvanic_screw_faring",
+        mass_per_unit: ".25",
+        volume_per_unit: ".05",
+        credits_per_unit: ".2",
+    },
+    ItemDetail {
+        name: "anodized_metal_plate",
+        mass_per_unit: "10",
+        volume_per_unit: "5",
+        credits_per_unit: "20",
+    },
+    ItemDetail {
+        name: "insulated_wire_spool",
+        mass_per_unit: "2.5",
+        volume_per_unit: "3",
+        credits_per_unit: "15",
+    },
+    ItemDetail {
+        name: "synthetic_foliated_kalkite",
+        mass_per_unit: "3.6",
+        volume_per_unit: "6",
+        credits_per_unit: "232",
+    },
+    ItemDetail {
+        name: "rotor",
+        mass_per_unit: "20",
+        volume_per_unit: "8.2",
+        credits_per_unit: "112",
+    },
+];
+
 const ITEMS: &[Item] = &[
     Item {
-        quantity: "4 tbsp",
-        name: "olive oil",
+        quantity: "1000",
+        name: "galvanic_screw_faring",
     },
     Item {
-        quantity: "1",
-        name: "onion thinly sliced",
+        quantity: "22",
+        name: "anodized_metal_plate",
     },
     Item {
-        quantity: "4",
-        name: "cloves garlic\npeeled and sliced",
+        quantity: "5",
+        name: "insulated_wire_spool",
     },
     Item {
-        quantity: "1",
-        name: "small bay leaf",
+        quantity: "10",
+        name: "synthetic_foliated_kalkite",
     },
     Item {
-        quantity: "1",
-        name: "small eggplant cut\ninto 1/2 inch cubes",
-    },
-    Item {
-        quantity: "1",
-        name: "small zucchini halved\nlengthwise and cut\ninto thin slices",
-    },
-    Item {
-        quantity: "1",
-        name: "red bell pepper cut\ninto slivers",
-    },
-    Item {
-        quantity: "4",
-        name: "plum tomatoes\ncoarsely chopped",
-    },
-    Item {
-        quantity: "1 tsp",
-        name: "kosher salt",
-    },
-    Item {
-        quantity: "1/4 cup",
-        name: "shredded fresh basil\nleaves",
-    },
-    Item {
-        quantity: "",
-        name: "freshly ground black\npepper",
+        quantity: "5",
+        name: "rotor",
     },
 ];
 
@@ -120,34 +131,63 @@ impl Widget for InventoryTab {
             horizontal: 2,
             vertical: 1,
         });
-        // let [inventory, items] =
+
         let [items] =
             Layout::horizontal([Constraint::Min(30)]).areas(area);
 
-        // render_inventory(inventory, buf);
         render_items(self.row_index, items, buf);
     }
 }
 
-fn render_inventory(area: Rect, buf: &mut Buffer) {
-    let lines = INVENTORY
-        .iter()
-        .map(|(step, text)| Line::from(vec![step.white().bold(), text.gray()]))
-        .collect_vec();
-    Paragraph::new(lines)
-        .wrap(Wrap { trim: true })
-        .block(Block::new().padding(Padding::new(0, 1, 0, 0)))
-        .render(area, buf);
+fn parse_f32(field_name: &str, value: &str, item_name: &str) -> Result<f32, String> {
+    value.parse::<f32>().map_err(|e| {
+        format!(
+            "Failed to parse '{}' for item '{}': value '{}': {}",
+            field_name, item_name, value, e
+        )
+    })
 }
 
 fn render_items(selected_row: usize, area: Rect, buf: &mut Buffer) {
     let mut state = TableState::default().with_selected(Some(selected_row));
-    let rows = ITEMS.iter().copied();
+    let items = ITEMS.iter().copied();
+    let item_details = ITEM_DETAILS.iter().copied();
+
+    // Build lookup map from name to Properties
+    let prop_map: HashMap<_, _> = item_details
+        .into_iter()
+        .map(|p| (p.name, p))
+        .collect();
+
+    // Join and parse values
+    let combined: Vec<ItemAggregate> = items
+        .into_iter()
+        .filter_map(|item| {
+            prop_map.get(item.name).and_then(|prop| {
+                // Try to parse all fields
+                let quantity: f32 = item.quantity.parse::<f32>().ok()?;
+                let mass: f32 = prop.mass_per_unit.parse().ok()?;
+                let volume: f32 = prop.volume_per_unit.parse().ok()?;
+                let credits: f32 = prop.credits_per_unit.parse().ok()?;
+                
+
+                Some(vec![ItemAggregate {
+                    name: item.name,
+                    quantity: item.quantity,
+                    mass: Box::leak(Box::new((quantity * mass).to_string())),
+                    volume: Box::leak(Box::new((quantity * volume).to_string())),
+                    credits: Box::leak(Box::new((quantity * credits).to_string())),
+                }])
+            })
+        })
+        .flatten()
+        .collect();
+    
     let theme = THEME.inventory;
     StatefulWidget::render(
-        Table::new(rows, [Constraint::Length(7), Constraint::Length(30)])
+        Table::new(combined, [Constraint::Length(30), Constraint::Length(13), Constraint::Length(13), Constraint::Length(13), Constraint::Length(13)])
             .block(Block::new().style(theme.items))
-            .header(Row::new(vec!["Qty", "Item"]).style(theme.items_header))
+            .header(Row::new(vec!["Item", "Units", "Mass(kg)", "Volume(Mcu))", "Credits(ZK)" ]).style(theme.items_header))
             .row_highlight_style(Style::new().light_yellow()),
         area,
         buf,

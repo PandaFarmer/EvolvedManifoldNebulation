@@ -21,6 +21,8 @@
 
 mod models {
     pub mod item;
+    pub mod item_detail;
+    pub mod item_aggregate;
 }
 
 mod app;
