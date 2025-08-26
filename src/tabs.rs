@@ -4,6 +4,10 @@ mod recipe;
 mod traceroute;
 mod weather;
 mod inventory;
+mod market_consignment;
+mod market_inventory;
+mod personal_consignment;
+mod personal_inventory;
 
 pub use about::AboutTab;
 pub use email::EmailTab;
@@ -11,3 +15,7 @@ pub use recipe::RecipeTab;
 pub use traceroute::TracerouteTab;
 pub use weather::WeatherTab;
 pub use inventory::InventoryTab;
+pub use market_consignment::MarketConsignmentTab;
+pub use market_inventory::MarketInventoryTab;
+pub use personal_consignment::PersonalConsignmentTab;
+pub use personal_inventory::PersonalInventoryTab;

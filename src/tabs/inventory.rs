@@ -16,21 +16,7 @@ use crate::{RgbSwatch, THEME};
 
 use std::collections::HashMap;
 
-// https://www.realsimple.com/food-inventorys/browse-all-inventorys/ratatouille
-const INVENTORY: &[(&str, &str)] = &[
-    (
-        "Step 1: ",
-        "Over medium-low heat, add the oil to a large skillet with the onion, garlic, and bay \
-        leaf, stirring occasionally, until the onion has softened.",
-    ),
-    (
-        "Step 2: ",
-        "Add the eggplant and cook, stirring occasionally, for 8 minutes or until the eggplant \
-        has softened. Stir in the zucchini, red bell pepper, tomatoes, and salt, and cook over \
-        medium heat, stirring occasionally, for 5 to 7 minutes or until the vegetables are \
-        tender. Stir in the basil and few grinds of pepper to taste.",
-    ),
-];
+pub const num_items : usize = 5;
 
 const ITEM_DETAILS: &[ItemDetail] = &[
     ItemDetail {
@@ -65,81 +51,60 @@ const ITEM_DETAILS: &[ItemDetail] = &[
     },
 ];
 
-const ITEMS: &[Item] = &[
-    Item {
-        quantity: "1000",
-        name: "galvanic_screw_faring",
-    },
-    Item {
-        quantity: "22",
-        name: "anodized_metal_plate",
-    },
-    Item {
-        quantity: "5",
-        name: "insulated_wire_spool",
-    },
-    Item {
-        quantity: "10",
-        name: "synthetic_foliated_kalkite",
-    },
-    Item {
-        quantity: "5",
-        name: "rotor",
-    },
-];
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct InventoryTab {
-    row_index: usize,
+    pub(crate) row_index: usize,
+    pub(crate) items: [Item ; num_items],
 }
+
+// impl InventoryTab {
+//     /// Select the previous item in the items list (with wrap around)
+//     pub fn prev(&mut self) {
+//         self.row_index = self.row_index.saturating_add(ITEMS.len() - 1) % ITEMS.len();
+//     }
+
+//     /// Select the next item in the items list (with wrap around)
+//     pub fn next(&mut self) {
+//         self.row_index = self.row_index.saturating_add(1) % ITEMS.len();
+//     }
+// }
 
 impl InventoryTab {
     /// Select the previous item in the items list (with wrap around)
     pub fn prev(&mut self) {
-        self.row_index = self.row_index.saturating_add(ITEMS.len() - 1) % ITEMS.len();
+        self.row_index = self.row_index.saturating_add(self.items.len() - 1) % self.items.len();
     }
 
     /// Select the next item in the items list (with wrap around)
     pub fn next(&mut self) {
-        self.row_index = self.row_index.saturating_add(1) % ITEMS.len();
+        self.row_index = self.row_index.saturating_add(1) % self.items.len();
     }
-}
 
-impl Widget for InventoryTab {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        RgbSwatch.render(area, buf);
-        let area = area.inner(Margin {
-            vertical: 1,
-            horizontal: 2,
-        });
-        Clear.render(area, buf);
-        Block::new()
-            .title("Ratatouille Inventory".bold().white())
-            .title_alignment(Alignment::Center)
-            .style(THEME.content)
-            .padding(Padding::new(1, 1, 2, 1))
-            .render(area, buf);
-
-        let scrollbar_area = Rect {
-            y: area.y + 2,
-            height: area.height - 3,
-            ..area
+    pub fn add(&mut self, chunksize : u32) {
+        let item: Item = self.items[self.row_index];
+        let new_quantity :u32 = chunksize + item.quantity.parse::<u32>().ok().unwrap();
+        let new_item: Item = Item {
+            quantity: Box::leak(Box::new(new_quantity.to_string())),
+            name: item.name,
         };
-        render_scrollbar(self.row_index, scrollbar_area, buf);
+        self.items[self.row_index] = new_item;
+    }
 
-        let area = area.inner(Margin {
-            horizontal: 2,
-            vertical: 1,
-        });
-
-        let [items] =
-            Layout::horizontal([Constraint::Min(30)]).areas(area);
-
-        render_items(self.row_index, items, buf);
+    pub fn remove(&mut self, chunksize : u32) {
+        let item: Item = self.items[self.row_index];
+        let mut new_quantity : u32 = item.quantity.parse::<u32>().ok().unwrap() - chunksize;
+        new_quantity = if new_quantity > 0 { new_quantity } else { 0 };
+        let new_item: Item = Item {
+            quantity: Box::leak(Box::new(new_quantity.to_string())),
+            name: item.name,
+        };
+        self.items[self.row_index] = new_item;
     }
 }
 
-fn parse_f32(field_name: &str, value: &str, item_name: &str) -> Result<f32, String> {
+
+pub fn parse_f32(field_name: &str, value: &str, item_name: &str) -> Result<f32, String> {
     value.parse::<f32>().map_err(|e| {
         format!(
             "Failed to parse '{}' for item '{}': value '{}': {}",
@@ -148,9 +113,9 @@ fn parse_f32(field_name: &str, value: &str, item_name: &str) -> Result<f32, Stri
     })
 }
 
-fn render_items(selected_row: usize, area: Rect, buf: &mut Buffer) {
+pub fn render_items(items: [Item; num_items], selected_row: usize, area: Rect, buf: &mut Buffer) {
     let mut state = TableState::default().with_selected(Some(selected_row));
-    let items = ITEMS.iter().copied();
+    let items = items.iter().copied();
     let item_details = ITEM_DETAILS.iter().copied();
 
     // Build lookup map from name to Properties
@@ -169,7 +134,7 @@ fn render_items(selected_row: usize, area: Rect, buf: &mut Buffer) {
                 let mass: f32 = prop.mass_per_unit.parse().ok()?;
                 let volume: f32 = prop.volume_per_unit.parse().ok()?;
                 let credits: f32 = prop.credits_per_unit.parse().ok()?;
-                
+
 
                 Some(vec![ItemAggregate {
                     name: item.name,
@@ -182,7 +147,7 @@ fn render_items(selected_row: usize, area: Rect, buf: &mut Buffer) {
         })
         .flatten()
         .collect();
-    
+
     let theme = THEME.inventory;
     StatefulWidget::render(
         Table::new(combined, [Constraint::Length(30), Constraint::Length(13), Constraint::Length(13), Constraint::Length(13), Constraint::Length(13)])
@@ -195,9 +160,9 @@ fn render_items(selected_row: usize, area: Rect, buf: &mut Buffer) {
     );
 }
 
-fn render_scrollbar(position: usize, area: Rect, buf: &mut Buffer) {
+pub fn render_scrollbar(items: [Item; num_items], position: usize, area: Rect, buf: &mut Buffer) {
     let mut state = ScrollbarState::default()
-        .content_length(ITEMS.len())
+        .content_length(items.len())
         .viewport_content_length(6)
         .position(position);
     Scrollbar::new(ScrollbarOrientation::VerticalRight)

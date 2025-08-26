@@ -16,11 +16,12 @@ use strum::{Display, EnumIter, FromRepr, IntoEnumIterator};
 
 use crate::{
     destroy,
-    tabs::{AboutTab, EmailTab, RecipeTab, TracerouteTab, WeatherTab, InventoryTab},
+    tabs::{AboutTab, EmailTab, RecipeTab, TracerouteTab, WeatherTab, InventoryTab, 
+        MarketConsignmentTab, MarketInventoryTab, PersonalConsignmentTab, PersonalInventoryTab,},
     THEME,
 };
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct App {
     mode: Mode,
     tab: Tab,
@@ -30,6 +31,12 @@ pub struct App {
     traceroute_tab: TracerouteTab,
     weather_tab: WeatherTab,
     inventory_tab : InventoryTab,
+    market_consignment_tab : MarketConsignmentTab,
+    market_inventory_tab : MarketInventoryTab,
+    personal_consignment_tab : PersonalConsignmentTab,
+    personal_inventory_tab : PersonalInventoryTab,
+    chunksize: u32,
+
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -43,12 +50,16 @@ enum Mode {
 #[derive(Debug, Clone, Copy, Default, Display, EnumIter, FromRepr, PartialEq, Eq)]
 enum Tab {
     #[default]
-    About,
-    Recipe,
-    Email,
-    Traceroute,
-    Weather,
-    Inventory,
+    // About,
+    // Recipe,
+    // Email,
+    // Traceroute,
+    // Weather,
+    // Inventory,
+    MarketConsignment,
+    MarketInventory,
+    PersonalConsignment,
+    PersonalInventory,
 }
 
 impl App {
@@ -98,30 +109,43 @@ impl App {
             KeyCode::Char('l') | KeyCode::Right => self.next_tab(),
             KeyCode::Char('k') | KeyCode::Up => self.prev(),
             KeyCode::Char('j') | KeyCode::Down => self.next(),
-            KeyCode::Char('d') | KeyCode::Delete => self.destroy(),
+            KeyCode::Delete => self.destroy(),
+            KeyCode::Char('w') => self.increase_chunksize(),
+            KeyCode::Char('s') => self.decrease_chunksize(),
+            KeyCode::Char('a') => self.move_to_storage(self.chunksize),
+            KeyCode::Char('d') => self.move_to_consignment(self.chunksize),
+            KeyCode::Char(' ') => self.enter(),
             _ => {}
         };
     }
 
     fn prev(&mut self) {
         match self.tab {
-            Tab::About => self.about_tab.prev_row(),
-            Tab::Recipe => self.recipe_tab.prev(),
-            Tab::Email => self.email_tab.prev(),
-            Tab::Traceroute => self.traceroute_tab.prev_row(),
-            Tab::Weather => self.weather_tab.prev(),
-            Tab::Inventory => self.inventory_tab.prev(),
+            // Tab::About => self.about_tab.prev_row(),
+            // Tab::Recipe => self.recipe_tab.prev(),
+            // Tab::Email => self.email_tab.prev(),
+            // Tab::Traceroute => self.traceroute_tab.prev_row(),
+            // Tab::Weather => self.weather_tab.prev(),
+            // Tab::Inventory => self.inventory_tab.prev(),
+            Tab::MarketConsignment => self.market_consignment_tab.prev(),
+            Tab::MarketInventory => self.market_inventory_tab.prev(),
+            Tab::PersonalConsignment => self.personal_consignment_tab.prev(),
+            Tab::PersonalInventory => self.personal_inventory_tab.prev(),
         }
     }
 
     fn next(&mut self) {
         match self.tab {
-            Tab::About => self.about_tab.next_row(),
-            Tab::Recipe => self.recipe_tab.next(),
-            Tab::Email => self.email_tab.next(),
-            Tab::Traceroute => self.traceroute_tab.next_row(),
-            Tab::Weather => self.weather_tab.next(),
-            Tab::Inventory => self.inventory_tab.next(),
+            // Tab::About => self.about_tab.next_row(),
+            // Tab::Recipe => self.recipe_tab.next(),
+            // Tab::Email => self.email_tab.next(),
+            // Tab::Traceroute => self.traceroute_tab.next_row(),
+            // Tab::Weather => self.weather_tab.next(),
+            // Tab::Inventory => self.inventory_tab.next(),
+            Tab::MarketConsignment => self.market_consignment_tab.next(),
+            Tab::MarketInventory => self.market_inventory_tab.next(),
+            Tab::PersonalConsignment => self.personal_consignment_tab.next(),
+            Tab::PersonalInventory => self.personal_inventory_tab.next(),
         }
     }
 
@@ -136,6 +160,91 @@ impl App {
     fn destroy(&mut self) {
         self.mode = Mode::Destroy;
     }
+    
+    // fn move_to_storage(&mut self){
+    //     self.tab = self.tab.move_to_storage(self.chunksize);
+    // }
+    //
+    // fn move_to_consignment(&mut self){
+    //     self.tab = self.tab.move_to_consignment(self.chunksize);
+    // }
+    //
+    // fn enter(&mut self){
+    //     self.tab = self.tab.enter();
+    // }
+
+    fn increase_chunksize(&mut self){
+        self.chunksize = if U32Log10(self.chunksize) < U32Log10(std::u32::MAX/10) { self.chunksize * 10} else {self.chunksize};
+    }
+    fn decrease_chunksize(&mut self){
+        self.chunksize = if self.chunksize == 1 {1} else { self.chunksize / 10 };
+    }
+
+
+    fn move_to_storage(&mut self, chunksize:u32) {
+        match self.tab {
+            Tab::MarketConsignment => {
+                self.market_consignment_tab.remove(chunksize);
+                self.market_inventory_tab.add(chunksize);
+                // let current_index = self as usize;
+                // Self::from_repr(current_index).unwrap_or(self)
+            },
+            Tab::PersonalConsignment => {
+                self.personal_consignment_tab.remove(chunksize);
+                self.personal_inventory_tab.add(chunksize);
+            },
+            tab => {},
+        }
+
+        // self.tab = self.tab.curr();
+    }
+    fn move_to_consignment(&mut self, chunksize:u32) {
+        match self.tab {
+            Tab::MarketInventory => {
+                self.market_inventory_tab.remove(chunksize);
+                self.market_consignment_tab.add(chunksize);
+            },
+            Tab::PersonalInventory => {
+                self.personal_inventory_tab.remove(chunksize);
+                self.personal_consignment_tab.add(chunksize);
+            },
+            tab => {},
+        }
+
+    }
+    fn enter(&mut self){
+        match self.tab {
+            Tab::MarketConsignment => {
+                let items = std::mem::take(&mut self.market_consignment_tab.inventory.items);
+
+                for mut item in items {
+                    let chunksize: u32 = item.quantity.parse::<u32>().unwrap();
+                    self.market_consignment_tab.remove(chunksize);
+                    self.personal_inventory_tab.add(chunksize);
+                }
+            },
+            Tab::PersonalConsignment => {
+                let items = std::mem::take(&mut self.personal_consignment_tab.inventory.items);
+
+                for mut item in items {
+                    let chunksize: u32 = item.quantity.parse::<u32>().unwrap();
+                    self.personal_consignment_tab.remove(chunksize);
+                    self.market_inventory_tab.add(chunksize)
+                }
+            },
+            tab => {},
+        }
+    }
+
+    // Tab::MarketConsignment
+    // Tab::MarketInventory
+    // Tab::PersonalConsignment
+    // Tab::PersonalInventory
+
+    // self.market_consignment_tab
+    // self.market_inventory_tab
+    // self.personal_consignment_tab
+    // self.personal_inventory_tab
 }
 
 /// Implement Widget for &App rather than for App as we would otherwise have to clone or copy the
@@ -159,8 +268,10 @@ impl Widget for &App {
 
 impl App {
     fn render_title_bar(&self, area: Rect, buf: &mut Buffer) {
-        let layout = Layout::horizontal([Constraint::Min(0), Constraint::Length(43)]);
+        // let layout = Layout::horizontal([Constraint::Min(0), Constraint::Length(43)]);
+        let layout = Layout::horizontal([Constraint::Min(0), Constraint::Length(76)]);
         let [title, tabs] = layout.areas(area);
+
 
         Span::styled("Ratatui", THEME.app_title).render(title, buf);
         let titles = Tab::iter().map(Tab::title);
@@ -175,12 +286,16 @@ impl App {
 
     fn render_selected_tab(&self, area: Rect, buf: &mut Buffer) {
         match self.tab {
-            Tab::About => self.about_tab.render(area, buf),
-            Tab::Recipe => self.recipe_tab.render(area, buf),
-            Tab::Email => self.email_tab.render(area, buf),
-            Tab::Traceroute => self.traceroute_tab.render(area, buf),
-            Tab::Weather => self.weather_tab.render(area, buf),
-            Tab::Inventory => self.inventory_tab.render(area, buf),
+            // Tab::About => self.about_tab.render(area, buf),
+            // Tab::Recipe => self.recipe_tab.render(area, buf),
+            // Tab::Email => self.email_tab.render(area, buf),
+            // Tab::Traceroute => self.traceroute_tab.render(area, buf),
+            // Tab::Weather => self.weather_tab.render(area, buf),
+            // Tab::Inventory => self.inventory_tab.render(area, buf),
+            Tab::MarketConsignment => self.market_consignment_tab.render(area, buf),
+            Tab::MarketInventory => self.market_inventory_tab.render(area, buf),
+            Tab::PersonalConsignment => self.personal_consignment_tab.render(area, buf),
+            Tab::PersonalInventory => self.personal_inventory_tab.render(area, buf),
         };
     }
 
@@ -192,6 +307,11 @@ impl App {
             ("J/↓", "Down"),
             ("D/Del", "Destroy"),
             ("Q/Esc", "Quit"),
+            ("w", "Increase Chunksize"),
+            ("s", "Decrease Chunksize"),
+            ("a", "Move to Storage"),
+            ("d", "Move to Consignment"),
+            ("v", "Enter"),
         ];
         let spans = keys
             .iter()
@@ -208,7 +328,16 @@ impl App {
     }
 }
 
+fn U32Log10(x : u32 ) -> f32
+{
+    return (x as f32).log10();
+}
+
 impl Tab {
+    fn curr(self) -> Self {
+        let current_index = self as usize;
+        Self::from_repr(current_index).unwrap_or(self)
+    }
     fn next(self) -> Self {
         let current_index = self as usize;
         let next_index = current_index.saturating_add(1);
@@ -223,8 +352,10 @@ impl Tab {
 
     fn title(self) -> String {
         match self {
-            Self::About => String::new(),
+            // Self::About => String::new(),
             tab => format!(" {tab} "),
         }
     }
+
+
 }

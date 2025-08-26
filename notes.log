@@ -42,3 +42,17 @@ need functionality of placing items in consignment/cache.. 4 separate tabs, 2 fo
 also button to inspect item type on market and bring up graph
 shift in market prices based off some metrics idk liquidity, sector demand, etc.. refactor market value script?
 feature to flip display mode between total and each per item
+
+8/20/2025
+need 5 new inputs- wasd? for l/r store<->consignment, up/down increase magnitude, spacebar for confirm?
+howto impl moving values between Item Vecs across files
+
+8/22/2025
+see impl Tab in app.rs for missing implementations?, also 
+todo impl "add" and "remove" fns in market/personal files, put pricing under market.rs or inventory.rs with a market/broker/store fee
+
+8/24/2025
+added 4 tabs, THEME.inventory revert after replace, inventory now holds trait and utility functions..?
+
+8/26/202025
+other todos:
