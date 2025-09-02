@@ -14,7 +14,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 
 use ratatui::widgets::Row;
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Item {
     pub quantity: &'static str,
     pub name: &'static str,

@@ -54,5 +54,9 @@ todo impl "add" and "remove" fns in market/personal files, put pricing under mar
 8/24/2025
 added 4 tabs, THEME.inventory revert after replace, inventory now holds trait and utility functions..?
 
-8/26/202025
-other todos:
+9/1/2025
+improper contents in items/item_details in render_inventory due to mixup on references/initialization of items/item_details between files...
+todo initialize items in inventory before calling add/remove
+
+9/2/2025
+fixed values not being initialized in Tabs, need to make sure InventoryTab items and <Specific>Tab items have consistent values..

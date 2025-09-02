@@ -215,7 +215,7 @@ impl App {
     fn enter(&mut self){
         match self.tab {
             Tab::MarketConsignment => {
-                let items = std::mem::take(&mut self.market_consignment_tab.inventory.items);
+                let items = std::mem::take(&mut self.market_consignment_tab.items);
 
                 for mut item in items {
                     let chunksize: u32 = item.quantity.parse::<u32>().unwrap();
@@ -224,7 +224,7 @@ impl App {
                 }
             },
             Tab::PersonalConsignment => {
-                let items = std::mem::take(&mut self.personal_consignment_tab.inventory.items);
+                let items = std::mem::take(&mut self.personal_consignment_tab.items);
 
                 for mut item in items {
                     let chunksize: u32 = item.quantity.parse::<u32>().unwrap();
@@ -307,11 +307,11 @@ impl App {
             ("J/↓", "Down"),
             ("D/Del", "Destroy"),
             ("Q/Esc", "Quit"),
-            ("w", "Increase Chunksize"),
-            ("s", "Decrease Chunksize"),
-            ("a", "Move to Storage"),
-            ("d", "Move to Consignment"),
-            ("v", "Enter"),
+            ("W", "Increase Chunksize"),
+            ("D", "Decrease Chunksize"),
+            ("A", "Move to Storage"),
+            ("D", "Move to Consignment"),
+            ("V", "Enter"),
         ];
         let spans = keys
             .iter()
