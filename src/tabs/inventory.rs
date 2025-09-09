@@ -124,89 +124,60 @@ pub fn parse_f32(field_name: &str, value: &str, item_name: &str) -> Result<f32, 
     })
 }
 
-pub fn render_items(items: &[Item; num_items], item_details: [ItemDetail; num_items], selected_row: usize, area: Rect, buf: &mut Buffer) {
-    let mut state = TableState::default().with_selected(Some(selected_row));
+pub fn combined_items(items: &[Item; num_items], item_details: &[ItemDetail; num_items]) -> Vec<ItemAggregate> {
     let items = items.iter().copied();
-    // let item_details = ITEM_DETAILS.iter().copied();
-
-
-
-    // println!("items len: {}", item_details.len());
-    // println!("item_details len: {}", item_details.len());
-
-    // Build lookup map from name to Properties
     let prop_map: HashMap<_, _> = item_details
         .into_iter()
         .map(|p| (p.name, p))
         .collect();
-
-    // println!("area being rendered: {}", area.to_string());
-    // println!("area being rendered: {}", area);
-
-    // Join and parse values
-    // let combined: Vec<ItemAggregate> = item_details
-    //     .into_iter()
-    //     .filter_map(|item| {
-    //         prop_map.get(item.name).and_then(|prop| {
-    //             // Try to parse all fields
-    //             let quantity: f32 = item.quantity.parse::<f32>().ok()?;
-    //             let mass: f32 = prop.mass_per_unit.parse().ok()?;
-    //             let volume: f32 = prop.volume_per_unit.parse().ok()?;
-    //             let credits: f32 = prop.credits_per_unit.parse().ok()?;
-
-
-    //             Some(vec![ItemAggregate {
-    //                 name: item.name,
-    //                 quantity: item.quantity,
-    //                 mass: Box::leak(Box::new((quantity * mass).to_string())),
-    //                 volume: Box::leak(Box::new((quantity * volume).to_string())),
-    //                 credits: Box::leak(Box::new((quantity * credits).to_string())),
-    //             }])
-    //         })
-    //     })
-    //     .flatten()
-    //     .collect();
-
-
     let combined: Vec<ItemAggregate> = items
-    .into_iter()
-    .map(|item| {
-        // Try to get property data; use default values if not found
-        let prop = prop_map.get(&item.name);
+        .into_iter()
+        .filter_map(|item| {
+            prop_map.get(item.name).and_then(|prop| {
+                // Try to parse all fields
+                let quantity: f32 = item.quantity.parse::<f32>().ok()?;
+                let mass: f32 = prop.mass_per_unit.parse::<f32>().ok()?;
+                let volume: f32 = prop.volume_per_unit.parse::<f32>().ok()?;
+                let credits: f32 = prop.credits_per_unit.parse::<f32>().ok()?;
 
-        // println!("item name: {}", item.name);
 
-        let quantity: f32 = item.quantity.parse::<f32>().unwrap_or(0.0);
-        let mass: f32 = prop
-            .and_then(|p| p.mass_per_unit.parse::<f32>().ok())
-            .unwrap_or(0.0);
-        let volume: f32 = prop
-            .and_then(|p| p.volume_per_unit.parse::<f32>().ok())
-            .unwrap_or(0.0);
-        let credits: f32 = prop
-            .and_then(|p| p.credits_per_unit.parse::<f32>().ok())
-            .unwrap_or(0.0);
-
-            ItemAggregate {
-                name: item.name,
-                quantity: item.quantity,
-                mass: Box::leak(Box::new((quantity * mass).to_string())),
-                volume: Box::leak(Box::new((quantity * volume).to_string())),
-                credits: Box::leak(Box::new((quantity * credits).to_string())),
-            }
+                Some(vec![ItemAggregate {
+                    name: item.name,
+                    quantity: item.quantity,
+                    mass: Box::leak(Box::new((quantity * mass).to_string())),
+                    volume: Box::leak(Box::new((quantity * volume).to_string())),
+                    credits: Box::leak(Box::new((quantity * credits).to_string())),
+                }])
+            })
         })
-    .collect();
+        .flatten()
+        .collect();
 
-    println!("combined[0]: {}", combined[0].name);
+    let check_index_combined:usize = 0;
+    // println!("combined[{}].name: {}", check_index_combined, combined[check_index_combined].name);
+    // println!("combined[{}].mass: {}", check_index_combined, combined[check_index_combined].mass);
+    // println!("combined[{}].volume: {}", check_index_combined, combined[check_index_combined].volume);
+    // println!("combined[{}].credits: {}", check_index_combined, combined[check_index_combined].credits);
 
 
     // println!("combined len: {}", combined.len());
+    // println!("area: {}", area.to_string());//0x30+4+3
+    // println!("buf: {}", buf.to_string());
 
+    // let _area = centered_rect(80, 20, frame.size());
+    
+    return combined;
+}
+
+pub fn render_items(combined: Vec<ItemAggregate>,selected_row: usize, area: Rect, buf: &mut Buffer) {
+    let mut state = TableState::default().with_selected(Some(selected_row));
+    let theme = THEME.inventory;
+    // let combined = combined_items(&self.items, &self.inventory.item_details);
     let theme = THEME.inventory;
     StatefulWidget::render(
         Table::new(combined, [Constraint::Length(30), Constraint::Length(13), Constraint::Length(13), Constraint::Length(13), Constraint::Length(13)])
             .block(Block::new().style(theme.items))
-            .header(Row::new(vec!["Item", "Units", "Mass(kg)", "Volume(Mcu))", "Credits(ZK)" ]).style(theme.items_header))
+            .header(Row::new(vec!["Item", "Units", "Mass(kg)", "Volume(Mcu)", "Credits(ZK)" ]).style(theme.items_header))
             .row_highlight_style(Style::new().light_yellow()),
         area,
         buf,
