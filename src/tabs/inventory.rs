@@ -92,25 +92,31 @@ impl InventoryTab {
         self.row_index = self.row_index.saturating_add(1) % self.item_details.len();
     }
 
-    pub fn add(&mut self, items: &mut [Item; num_items], chunksize : u32) {
-        let item: Item = items[self.row_index];
-        let new_quantity :u32 = chunksize + item.quantity.parse::<u32>().ok().unwrap();
+    pub fn add(&mut self, items: &mut [Item; num_items], row_index:usize, chunksize : u32) {
+        let item: Item = items[row_index];
+        let new_quantity :u32 = chunksize + item.quantity.parse::<u32>().unwrap();
         let new_item: Item = Item {
             quantity: Box::leak(Box::new(new_quantity.to_string())),
             name: item.name,
         };
-        items[self.row_index] = new_item;
+        items[row_index] = new_item;
     }
 
-    pub fn remove(&mut self, items: &mut [Item; num_items], chunksize : u32) {
-        let item: Item = items[self.row_index];
-        let mut new_quantity : u32 = item.quantity.parse::<u32>().ok().unwrap() - chunksize;
+    pub fn remove(&mut self, items: &mut [Item; num_items], row_index:usize, chunksize : u32) -> u32 {
+        let item: Item = items[row_index];
+        
+        let original_item_quantity:u32 = item.quantity.parse::<u32>().unwrap();
+        let new_chunksize : u32 = if chunksize <= original_item_quantity { chunksize } else { original_item_quantity };
+        
+        let mut new_quantity : u32 = original_item_quantity - new_chunksize;
         new_quantity = if new_quantity > 0 { new_quantity } else { 0 };
         let new_item: Item = Item {
             quantity: Box::leak(Box::new(new_quantity.to_string())),
             name: item.name,
         };
-        items[self.row_index] = new_item;
+        items[row_index] = new_item;
+        
+        return new_chunksize;
     }
 }
 

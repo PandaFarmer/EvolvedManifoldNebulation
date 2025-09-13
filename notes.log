@@ -60,3 +60,10 @@ todo initialize items in inventory before calling add/remove
 
 9/2/2025
 fixed values not being initialized in Tabs, need to make sure InventoryTab items and <Specific>Tab items have consistent values..
+
+9/10/202025
+todo:
+fix underflow causing crashing
+fix MarketInventory->MarketConsignment only removing and not adding
+impl/add chunksize indicator
+

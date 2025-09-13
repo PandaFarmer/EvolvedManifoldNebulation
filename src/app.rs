@@ -56,10 +56,10 @@ enum Tab {
     // Traceroute,
     // Weather,
     // Inventory,
-    MarketConsignment,
     MarketInventory,
-    PersonalConsignment,
+    MarketConsignment,
     PersonalInventory,
+    PersonalConsignment,
 }
 
 impl App {
@@ -112,9 +112,9 @@ impl App {
             KeyCode::Delete => self.destroy(),
             KeyCode::Char('w') => self.increase_chunksize(),
             KeyCode::Char('s') => self.decrease_chunksize(),
-            KeyCode::Char('a') => self.move_to_storage(self.chunksize),
+            KeyCode::Char('a') => self.move_to_inventory(self.chunksize),
             KeyCode::Char('d') => self.move_to_consignment(self.chunksize),
-            KeyCode::Char(' ') => self.enter(),
+            KeyCode::Char('c') => self.enter(),
             _ => {}
         };
     }
@@ -127,10 +127,10 @@ impl App {
             // Tab::Traceroute => self.traceroute_tab.prev_row(),
             // Tab::Weather => self.weather_tab.prev(),
             // Tab::Inventory => self.inventory_tab.prev(),
-            Tab::MarketConsignment => self.market_consignment_tab.prev(),
             Tab::MarketInventory => self.market_inventory_tab.prev(),
-            Tab::PersonalConsignment => self.personal_consignment_tab.prev(),
+            Tab::MarketConsignment => self.market_consignment_tab.prev(),
             Tab::PersonalInventory => self.personal_inventory_tab.prev(),
+            Tab::PersonalConsignment => self.personal_consignment_tab.prev(),
         }
     }
 
@@ -142,10 +142,11 @@ impl App {
             // Tab::Traceroute => self.traceroute_tab.next_row(),
             // Tab::Weather => self.weather_tab.next(),
             // Tab::Inventory => self.inventory_tab.next(),
-            Tab::MarketConsignment => self.market_consignment_tab.next(),
+            
             Tab::MarketInventory => self.market_inventory_tab.next(),
-            Tab::PersonalConsignment => self.personal_consignment_tab.next(),
+            Tab::MarketConsignment => self.market_consignment_tab.next(),
             Tab::PersonalInventory => self.personal_inventory_tab.next(),
+            Tab::PersonalConsignment => self.personal_consignment_tab.next(),
         }
     }
 
@@ -161,8 +162,8 @@ impl App {
         self.mode = Mode::Destroy;
     }
     
-    // fn move_to_storage(&mut self){
-    //     self.tab = self.tab.move_to_storage(self.chunksize);
+    // fn move_to_inventory(&mut self){
+    //     self.tab = self.tab.move_to_inventory(self.chunksize);
     // }
     //
     // fn move_to_consignment(&mut self){
@@ -175,23 +176,29 @@ impl App {
 
     fn increase_chunksize(&mut self){
         self.chunksize = if U32Log10(self.chunksize) < U32Log10(std::u32::MAX/10) { self.chunksize * 10} else {self.chunksize};
+        self.chunksize = if self.chunksize == 0 {1} else {self.chunksize};
+        // println!("increased chunksize to {}", self.chunksize);
     }
     fn decrease_chunksize(&mut self){
         self.chunksize = if self.chunksize == 1 {1} else { self.chunksize / 10 };
+        // println!("decreased chunksize to {}", self.chunksize);
     }
 
 
-    fn move_to_storage(&mut self, chunksize:u32) {
+    fn move_to_inventory(&mut self, chunksize:u32) {
+        // println!("moving to inventory!");
         match self.tab {
             Tab::MarketConsignment => {
-                self.market_consignment_tab.remove(chunksize);
-                self.market_inventory_tab.add(chunksize);
+                // println!("moving to market_inventory_tab from market_consignment_tab!");
+                let removed_quantity : u32 = self.market_consignment_tab.remove(self.market_consignment_tab.inventory.row_index, chunksize);
+                self.market_inventory_tab.add(self.market_consignment_tab.inventory.row_index, removed_quantity);
                 // let current_index = self as usize;
                 // Self::from_repr(current_index).unwrap_or(self)
             },
             Tab::PersonalConsignment => {
-                self.personal_consignment_tab.remove(chunksize);
-                self.personal_inventory_tab.add(chunksize);
+                // println!("moving to personal_inventory_tab from personal_consignment_tab!");
+                let removed_quantity : u32 = self.personal_consignment_tab.remove(self.personal_consignment_tab.inventory.row_index, chunksize);
+                self.personal_inventory_tab.add(self.personal_consignment_tab.inventory.row_index, removed_quantity);
             },
             tab => {},
         }
@@ -199,37 +206,42 @@ impl App {
         // self.tab = self.tab.curr();
     }
     fn move_to_consignment(&mut self, chunksize:u32) {
+        // println!("moving to consignment!");
         match self.tab {
+            
             Tab::MarketInventory => {
-                self.market_inventory_tab.remove(chunksize);
-                self.market_consignment_tab.add(chunksize);
+                // println!("moving to market_consignment_tab from market_inventory_tab!");
+                let removed_quantity : u32 = self.market_inventory_tab.remove(self.market_inventory_tab.inventory.row_index, chunksize);
+                self.market_consignment_tab.add(self.market_inventory_tab.inventory.row_index, removed_quantity);
             },
             Tab::PersonalInventory => {
-                self.personal_inventory_tab.remove(chunksize);
-                self.personal_consignment_tab.add(chunksize);
+                // println!("moving to personal_consignment_tab from personal_inventory_tab!");
+                let removed_quantity : u32 = self.personal_inventory_tab.remove(self.personal_inventory_tab.inventory.row_index, chunksize);
+                self.personal_consignment_tab.add(self.personal_inventory_tab.inventory.row_index, removed_quantity);
             },
             tab => {},
         }
 
     }
     fn enter(&mut self){
+        // println!("enter pressed!");
         match self.tab {
             Tab::MarketConsignment => {
                 let items = std::mem::take(&mut self.market_consignment_tab.items);
 
-                for mut item in items {
+                for (row_index, mut item) in items.iter().enumerate() {
                     let chunksize: u32 = item.quantity.parse::<u32>().unwrap();
-                    self.market_consignment_tab.remove(chunksize);
-                    self.personal_inventory_tab.add(chunksize);
+                    let removed_quantity : u32 = self.market_consignment_tab.remove(row_index, chunksize);
+                    self.personal_inventory_tab.add(row_index, removed_quantity);
                 }
             },
             Tab::PersonalConsignment => {
                 let items = std::mem::take(&mut self.personal_consignment_tab.items);
 
-                for mut item in items {
+                for (row_index, mut item) in items.iter().enumerate() {
                     let chunksize: u32 = item.quantity.parse::<u32>().unwrap();
-                    self.personal_consignment_tab.remove(chunksize);
-                    self.market_inventory_tab.add(chunksize)
+                    let removed_quantity : u32 = self.personal_consignment_tab.remove(row_index, chunksize);
+                    self.market_inventory_tab.add(row_index, removed_quantity)
                 }
             },
             tab => {},
@@ -262,7 +274,7 @@ impl Widget for &App {
         Block::new().style(THEME.root).render(area, buf);
         self.render_title_bar(title_bar, buf);
         self.render_selected_tab(tab, buf);
-        App::render_bottom_bar(bottom_bar, buf);
+        App::render_bottom_bar(self, bottom_bar, buf);
     }
 }
 
@@ -299,7 +311,8 @@ impl App {
         };
     }
 
-    fn render_bottom_bar(area: Rect, buf: &mut Buffer) {
+    fn render_bottom_bar(&self, area: Rect, buf: &mut Buffer) {
+        let chunksize_string = self.chunksize.to_string();
         let keys = [
             ("H/←", "Left"),
             ("L/→", "Right"),
@@ -311,7 +324,8 @@ impl App {
             ("D", "Decrease Chunksize"),
             ("A", "Move to Storage"),
             ("D", "Move to Consignment"),
-            ("V", "Enter"),
+            ("C", "Enter"),
+            ("Chunksize: ", &chunksize_string),
         ];
         let spans = keys
             .iter()
