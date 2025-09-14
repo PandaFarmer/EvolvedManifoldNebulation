@@ -209,7 +209,7 @@ impl App {
         // println!("moving to consignment!");
         match self.tab {
             
-            Tab::MarketInventory => {
+            Tab::MarketInventory => {   
                 // println!("moving to market_consignment_tab from market_inventory_tab!");
                 let removed_quantity : u32 = self.market_inventory_tab.remove(self.market_inventory_tab.inventory.row_index, chunksize);
                 self.market_consignment_tab.add(self.market_inventory_tab.inventory.row_index, removed_quantity);
@@ -227,7 +227,7 @@ impl App {
         // println!("enter pressed!");
         match self.tab {
             Tab::MarketConsignment => {
-                let items = std::mem::take(&mut self.market_consignment_tab.items);
+                let items = self.market_consignment_tab.items;
 
                 for (row_index, mut item) in items.iter().enumerate() {
                     let chunksize: u32 = item.quantity.parse::<u32>().unwrap();
@@ -236,7 +236,7 @@ impl App {
                 }
             },
             Tab::PersonalConsignment => {
-                let items = std::mem::take(&mut self.personal_consignment_tab.items);
+                let items = self.personal_consignment_tab.items;
 
                 for (row_index, mut item) in items.iter().enumerate() {
                     let chunksize: u32 = item.quantity.parse::<u32>().unwrap();
